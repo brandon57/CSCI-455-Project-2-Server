@@ -7,7 +7,7 @@ Note: In order to run this you need Java JDK version 17 or newer
 
 # These are the requirements for the project
 <p align="center">
-  <img src="Documents/project2_2023_Fall_pg1.png" width="688" />
+  <img src="Documents/project2_2023_Fall.png" width="688" />
 </p>
 
 # How to start the server
