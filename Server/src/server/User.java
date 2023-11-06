@@ -11,16 +11,18 @@ import java.time.format.DateTimeFormatter;
 
 public class User<T> implements Runnable {
 	
-	private Socket Connection = null;
+	private DatagramSocket Connection = null;
+	private DatagramPacket connectionPacket = null;
 	Database<T> Fundraisers;
-	private DataOutputStream toClient = null;
-	private BufferedReader fromClient = null;
+	//private DataOutputStream toClient = null;
+	//private BufferedReader fromClient = null;
 	private String textFromClient = "";
 	private DateTimeFormatter date_format = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");
 	
-	public User(Socket new_Connection, Database<T> database)
+	public User(DatagramSocket new_Connection, DatagramPacket new_connectionPacket, Database<T> database)
 	{
 		Connection = new_Connection;
+		connectionPacket = new_connectionPacket;
 		Fundraisers = database;
 	}
 	
@@ -28,11 +30,12 @@ public class User<T> implements Runnable {
 	public void run() {
 		try
 		{
-			System.out.println(Thread.currentThread().getName() + ": IP address: " + Connection.getInetAddress() + ", Port number: " + Connection.getPort() + ", ACTION: has connected"
+			System.out.println(Thread.currentThread().getName() + ": IP address: " + connectionPacket.getAddress() + ", Port number: " + connectionPacket.getPort() + ", ACTION: has connected"
 			+ ", Local time: " + date_format.format(LocalDateTime.now()));
 			
-			toClient = new DataOutputStream(Connection.getOutputStream());
-			fromClient = new BufferedReader(new InputStreamReader(Connection.getInputStream()));
+			//toClient = new DataOutputStream(Connection.getOutputStream());
+			//fromClient = new BufferedReader(new InputStreamReader(Connection.getInputStream()));
+			
 			toClient.writeBytes("You are connected!\n");
 			
 			//The beginning of the UI
@@ -85,6 +88,18 @@ public class User<T> implements Runnable {
 		{
 			
 		}
+		
+	}
+	
+	//This is an easier way to recieve data from a user
+	private String recieveData()
+	{
+		DatagramPacket 
+	}
+	
+	//This is an easier way to send data
+	private void sendData(String data)
+	{
 		
 	}
 	

@@ -6,25 +6,26 @@ import java.util.Scanner;
 
 public class ServerSide {
 	
-	private static ServerSocket User_Socket = null;
+	private static DatagramSocket User_Socket = null;
 	private static Scanner input = new Scanner(System.in);
 	//Manages the threads
 	private static ExecutorService Thread_Manager = Executors.newCachedThreadPool();
 	
 	
 	public static void main(String[] args) throws Exception {		
-		String inputText = "";
 		
 		//Creates a socket
 		Startup();
+		
+		byte[] recievedData = new byte[1024];
 		
 		Database Fundraisers = new Database();
 		
 		//Waits for a User to connect then creates a thread for each user
 		while(true)
 		{
-			Socket New_Connection = User_Socket.accept();
-			Thread_Manager.execute(new User(New_Connection, Fundraisers));
+			DatagramPacket New_Connection = new DatagramPacket(recievedData, recievedData.length);
+			Thread_Manager.execute(new User(User_Socket, New_Connection,  Fundraisers));
 		}
 	}
 	
@@ -50,7 +51,7 @@ public class ServerSide {
 			}
 		}
 		System.out.println("Opening Socket...");
-		User_Socket = new ServerSocket(Integer.valueOf(port));
+		User_Socket = new DatagramSocket(Integer.valueOf(port));
 		System.out.println("Socket is open");
 	}
 	
