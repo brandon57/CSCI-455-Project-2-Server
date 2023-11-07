@@ -25,6 +25,7 @@ public class ServerSide {
 		while(true)
 		{
 			DatagramPacket New_Connection = new DatagramPacket(recievedData, recievedData.length);
+			User_Socket.receive(New_Connection);
 			Thread_Manager.execute(new User(User_Socket, New_Connection,  Fundraisers));
 		}
 	}

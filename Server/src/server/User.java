@@ -18,6 +18,8 @@ public class User<T> implements Runnable {
 	//private BufferedReader fromClient = null;
 	private String textFromClient = "";
 	private DateTimeFormatter date_format = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");
+	private byte[] recievedData = new byte[1024];
+	private byte[] sendData = new byte[1024];
 	
 	public User(DatagramSocket new_Connection, DatagramPacket new_connectionPacket, Database<T> database)
 	{
@@ -35,7 +37,7 @@ public class User<T> implements Runnable {
 			
 			//toClient = new DataOutputStream(Connection.getOutputStream());
 			//fromClient = new BufferedReader(new InputStreamReader(Connection.getInputStream()));
-			
+			connection 
 			toClient.writeBytes("You are connected!\n");
 			
 			//The beginning of the UI
@@ -92,14 +94,18 @@ public class User<T> implements Runnable {
 	}
 	
 	//This is an easier way to recieve data from a user
-	private String recieveData()
+	private String recieveData() throws Exception
 	{
-		DatagramPacket 
+		connectionPacket = new DatagramPacket(recievedData, recievedData.length);
+		Connection.receive(connectionPacket);
+		String data = connectionPacket.getData().toString();
+		return data;
 	}
 	
 	//This is an easier way to send data
-	private void sendData(String data)
+	private void sendData(String data, InetAddress IP, int Port)
 	{
+		connectionPacket = new DatagramPacket(sendData, send Port, IP);
 		
 	}
 	
