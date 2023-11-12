@@ -18,7 +18,7 @@ public class Database <T> {
 	public <T> Database() throws ParseException
 	{
 		//Puts in a fundraiser to start with
-		set("John's college fund", 1000.0, "10/30/2023");
+		set("John's college fund", 1000.0, "10/30/2024");
 		set("John's wedding", 10040.0, "11/20/2022");
 	}
 	
@@ -98,6 +98,8 @@ public class Database <T> {
 		return 0;
 	}
 	
+	//synchronized public 
+	
 	//Checks if the date is valid
 	synchronized public boolean valid_Date(String date)
 	{
@@ -115,7 +117,6 @@ public class Database <T> {
 	//Checks how many fundraisers are in the system
 	synchronized public int size()
 	{
-		int result = Fundraisers.size();
-		return result;
+		return Fundraisers.size();
 	}
 }

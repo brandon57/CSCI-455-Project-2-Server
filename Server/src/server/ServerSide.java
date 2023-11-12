@@ -2,10 +2,16 @@ package server;
 
 import java.net.*;
 import java.util.concurrent.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 public class ServerSide {
 	
+	public static Map<InetAddress, Integer> User_state = new HashMap<>();
+	private static Map<InetAddress, String> temp = new HashMap<>();
+	public static Map<InetAddress, String> incomingData = Collections.synchronizedMap(temp);
 	private static DatagramSocket User_Socket = null;
 	private static Scanner input = new Scanner(System.in);
 	//Manages the threads
@@ -26,7 +32,18 @@ public class ServerSide {
 		{
 			DatagramPacket New_Connection = new DatagramPacket(recievedData, recievedData.length);
 			User_Socket.receive(New_Connection);
-			Thread_Manager.execute(new User(User_Socket, New_Connection,  Fundraisers));
+			String data = new String(New_Connection.getData(), 0, New_Connection.getLength()).trim();
+			//Checks if the data sent if from a Client that has already connected
+			if(!User_state.containsKey(New_Connection.getAddress()))
+			{
+				User_state.put(New_Connection.getAddress(), 0);
+				Thread_Manager.execute(new User(User_Socket, New_Connection, data, User_state.get(New_Connection.getAddress()), Fundraisers));
+			}
+			else
+			{
+				incomingData.put(New_Connection.getAddress(), data);
+			}
+			
 		}
 	}
 	

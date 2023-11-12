@@ -20,78 +20,78 @@ public class User<T> implements Runnable {
 	//private DataOutputStream toClient = null;
 	//private BufferedReader fromClient = null;
 	private String textFromClient = "";
+	private int state = 0;
 	private DateTimeFormatter date_format = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");
-	private byte[] recievedDatabuf = new byte[2048];
+	//private byte[] recievedDatabuf = new byte[2048];
 	private byte[] sendDatabuf = new byte[2048];
 	
-	public User(DatagramSocket new_Connection, DatagramPacket new_connectionPacket, Database<T> database)
+	public User(DatagramSocket new_Connection, DatagramPacket new_connectionPacket, String data, Integer newState, Database<T> database)
 	{
 		Connection = new_Connection;
 		IP = new_connectionPacket.getAddress();
 		port = new_connectionPacket.getPort();
 		Fundraisers = database;
+		textFromClient = data;
+		state = newState;
 	}
 	
 	@Override
 	public void run() {
 		try
 		{
+			int current_past = 0;
+			
 			System.out.println(Thread.currentThread().getName() + ": IP address: " + IP + ", Port number: " + port + ", ACTION: has connected"
 			+ ", Local time: " + date_format.format(LocalDateTime.now()));
-			
-			//toClient = new DataOutputStream(Connection.getOutputStream());
-			//fromClient = new BufferedReader(new InputStreamReader(Connection.getInputStream()));
-			//connection
 			sendData("You are connected!\n");
-			//toClient.writeBytes("You are connected!\n");
+			current_past = 0;
+			//textFromClient = null;
+//			if(state == 0)
+//			{
+//				
+//			}
 			
 			//The beginning of the UI
 			//This is how the User interacts with the Server
-			int current_past = 0;
+			
 			while(true)
 			{
 				//Keeps the user at either current or past fundrasiers 
 				sendData("\n");
-				//toClient.writeBytes("\n");
 				display_Fundraisers(current_past);
 				
 				display_options();
-				textFromClient = recieveData();
-				//textFromClient = fromClient.readLine().toLowerCase();
+				
+				textFromClient = recieveData().toLowerCase();
 				switch(textFromClient)
 				{
-				case "current":
-				case "1":
+				case "current", "1":
 					current_past = 0;
+					//ServerSide.User_state.replace(IP, 1);
 					break;
-				case "past":
-				case "2":
+				case "past", "2":
 					current_past = 1;
+					//ServerSide.User_state.put(IP, 2);
 					break;
-				case "create":
-				case "3":
+				case "create", "3":
+					//ServerSide.User_state.put(IP, 3);
 					create();
 					break;
-				case "donate":
-				case "4":
+				case "donate", "4":
+					//ServerSide.User_state.put(IP, 4);
 					donate();
 					break;
-				case "refresh":
-				case "5":
-					System.out.println(Thread.currentThread().getName() + ": IP address: " + Connection.getInetAddress() + ", Port number: " + Connection.getPort() + ", ACTION: Refreshed page"
+				case "refresh", "5":
+					System.out.println(Thread.currentThread().getName() + ": IP address: " + IP + ", Port number: " + port + ", ACTION: Refreshed page"
 					+ ", Local time: " + date_format.format(LocalDateTime.now()));
 					break;
-				case "exit":
-				case "6":
-					exit();
+				case "exit", "6":
+					exit(0);
 					break;
 				default:
 					sendData("Your input is not valid\n" + "Try again\n");
-					//toClient.writeBytes("Your input is not valid\n" + "Try again\n");
 					break;
 				}
-				
-				
 			}
 		}
 		catch(Exception e)
@@ -104,10 +104,15 @@ public class User<T> implements Runnable {
 	//This is an easier way to recieve data from a user
 	private String recieveData() throws Exception
 	{
-		DatagramPacket fromClient = new DatagramPacket(recievedDatabuf, recievedDatabuf.length);
-		Connection.receive(fromClient);
-		String data = fromClient.getData().toString();
-		return data;
+		LocalTime timeOut = LocalTime.now().plusMinutes(5);
+		while(!ServerSide.incomingData.containsKey(IP))
+		{
+			if(LocalTime.now().equals(timeOut) || LocalTime.now().isAfter(timeOut))
+			{
+				exit(1);
+			}
+		}
+		return ServerSide.incomingData.remove(IP);
 	}
 	
 	//This is an easier way to send data
@@ -115,6 +120,7 @@ public class User<T> implements Runnable {
 	{
 		try
 		{
+			sendDatabuf = data.getBytes();
 			DatagramPacket toClient = new DatagramPacket(sendDatabuf, sendDatabuf.length, IP, port);
 			Connection.send(toClient);
 		}
@@ -127,29 +133,39 @@ public class User<T> implements Runnable {
 	}
 	
 	//Let's the user quit the program
-	private void exit() throws Exception
+	private void exit(int type) throws Exception
 	{
-		System.out.println(Thread.currentThread().getName() + ": IP address: " + Connection.getInetAddress() + ", Port number: " + Connection.getPort() + ", ACTION: Disconnected"
+		String disconnectType = null;
+		switch(type)
+		{
+			case 0:
+				disconnectType = ", ACTION: Disconnected";
+				break;
+			case 1:
+				disconnectType = ", ACTION: Timeout";
+				break;
+		}
+		System.out.println(Thread.currentThread().getName() + ": IP address: " + IP + ", Port number: " + port + disconnectType
 		+ ", Local time: " + date_format.format(LocalDateTime.now()));
 		sendData("^^&^&^&\n");
-		//toClient.writeBytes("^^&^&^&\n");
-		//toClient.close();
-		//fromClient.close();
-		Connection.close();
+		ServerSide.incomingData.remove(IP);
+		ServerSide.User_state.remove(IP);
+		while(true)
+		{
+			Thread.currentThread().wait();
+		}
 	}
 	
 	//The UI for how the user donates
 	private void donate() throws Exception
 	{
-		System.out.println(Thread.currentThread().getName() + ": IP address: " + Connection.getInetAddress() + ", Port number: " + Connection.getPort() + ", ACTION: Donated"
+		System.out.println(Thread.currentThread().getName() + ": IP address: " + IP + ", Port number: " + port + ", ACTION: Donated"
 		+ ", Local time: " + date_format.format(LocalDateTime.now()));
 		Integer choice = 0;
 		Double donation = 0.0;
 		display_Fundraisers(0);
 		sendData("Which fundraiser do you want to donate to?\n" + "Your response should be a number" + " \n");
-		sendData(" \n");
-		//toClient.writeBytes("Which fundraiser do you want to donate to?\n" + "Your response should be a number" + " \n");		
-		//toClient.writeBytes(" \n");
+		sendData("stop");
 		while(true)
 		{
 			try
@@ -160,20 +176,18 @@ public class User<T> implements Runnable {
 					break;
 				}
 				sendData("Your input is not valid\n");
-				sendData("Try again\n" + " \n");
-				//toClient.writeBytes("Your input is not valid\n");
-				//toClient.writeBytes("Try again\n" + " \n");
+				sendData("Try again\n");
+				sendData("stop");
 			}
 			catch(Exception e)
 			{
 				sendData("Your input is not valid\n");
-				sendData("Try again\n" + " \n");
-				//toClient.writeBytes("Your input is not valid\n");
-				//toClient.writeBytes("Try again\n" + " \n");
+				sendData("Try again\n");
+				sendData("stop");
 			}
 		}
-		sendData("How much do you want to donate?\n" + " \n");
-		//toClient.writeBytes("How much do you want to donate?\n" + " \n");
+		sendData("How much do you want to donate?\n");
+		sendData("stop");
 		while(true)
 		{
 			try
@@ -185,28 +199,22 @@ public class User<T> implements Runnable {
 					break;
 				}
 				sendData("Your input is not valid\n");
-				sendData("Try again\n" + " \n");
-				
-				//toClient.writeBytes("Your input is not valid\n");
-				//toClient.writeBytes("Try again\n" + " \n");
+				sendData("Try again\n");
+				sendData("stop");
 			}
 			catch(Exception e)
 			{
 				sendData("Your input is not valid\n");
-				sendData("Try again\n" + " \n");
-				
-				//toClient.writeBytes("Your input is not valid\n");
-				//toClient.writeBytes("Try again\n" + " \n");
+				sendData("Try again\n");
+				sendData("stop");
 			}
 		}
 		if(Fundraisers.donate(choice, donation).equals(0))
 		{
 			sendData("Your donation couldn't go through :(\n");
-			//toClient.writeBytes("Your donation couldn't go through :(\n");
 			return;
 		}
 		sendData("Your donation went through! :)\n" + "Thank you!\n");
-		//toClient.writeBytes("Your donation went through! :)\n" + "Thank you!\n");
 	}
 	
 	//Displays the options the user can select
@@ -218,32 +226,24 @@ public class User<T> implements Runnable {
 		+"3. Create a funderaiser\n"
 		+"4. Donate to a funderaiser\n"
 		+"5. Refresh\n"
-		+"6. Exit\n" + " \n");
-//		toClient.writeBytes("These are the options you have to chose from\n"
-//		+"1. See current funderaisers\n"
-//		+"2. See past funderaisers\n"
-//		+"3. Create a funderaiser\n"
-//		+"4. Donate to a funderaiser\n"
-//		+"5. Refresh\n"
-//		+"6. Exit\n" + " \n");
+		+"6. Exit\n");
+		sendData("stop");
 	}
 	
 	
 	//Allows the user to Create a new fundraiser
 	private void create() throws Exception
 	{
-		System.out.println(Thread.currentThread().getName() + ": IP address: " + Connection.getInetAddress() + ", Port number: " + Connection.getPort() + ", ACTION: creating a fundraiser"
+		System.out.println(Thread.currentThread().getName() + ": IP address: " + IP + ", Port number: " + port + ", ACTION: creating a fundraiser"
 		+ ", Local time: " + date_format.format(LocalDateTime.now()));
 		String name;
 		Double target = 0.0;
 		String deadline;
-		
-		sendData("What is the name of your fundraiser?\n" + " \n");
-		//toClient.writeBytes("What is the name of your fundraiser?\n" + " \n");
+		sendData("What is the name of your fundraiser?\n");
+		sendData("stop");
 		name = recieveData();
-		
-		sendData("What is your target amount?\n" + " \n");
-		//toClient.writeBytes("What is your target amount?\n" + " \n");
+		sendData("What is your target amount?\n");
+		sendData("stop");
 		while(true)
 		{
 			try
@@ -255,20 +255,18 @@ public class User<T> implements Runnable {
 					break;
 				}
 				sendData("Your input is not valid\n");
-				sendData("Try again\n" + " \n");
-				//toClient.writeBytes("Your input is not valid\n");
-				//toClient.writeBytes("Try again\n" + " \n");
+				sendData("Try again\n");
+				sendData("stop");
 			}
 			catch(Exception e)
 			{
 				sendData("Your input is not valid\n");
-				sendData("Try again\n" + " \n");
-				//toClient.writeBytes("Your input is not valid\n");
-				//toClient.writeBytes("Try again\n" + " \n");
+				sendData("Try again\n");
+				sendData("stop");
 			}
 		}
-		sendData("What is the deadline? Your input should look like this \"MM/dd/yyyy\"\n" + " \n");
-		//toClient.writeBytes("What is the deadline? Your input should look like this \"MM/dd/yyyy\"\n" + " \n");
+		sendData("What is the deadline? Your input should look like this \"MM/dd/yyyy\"\n");
+		sendData("stop");
 		while(true)
 		{
 			deadline = recieveData();
@@ -279,9 +277,8 @@ public class User<T> implements Runnable {
 			else
 			{
 				sendData("Your input is not valid\n");
-				sendData("Try again\n" + " \n");
-				//toClient.writeBytes("Your input is not valid\n");
-				//toClient.writeBytes("Try again\n" + " \n");
+				sendData("Try again\n");
+				sendData("stop");
 			}
 		}
 		Fundraisers.set(name, target, deadline);
@@ -315,11 +312,9 @@ public class User<T> implements Runnable {
 		{
 			//Current Fundraisers
 			case 0:
-				System.out.println(Thread.currentThread().getName() + ": IP address: " + Connection.getInetAddress() + ", Port number: " + Connection.getPort() + ", ACTION: Looking at on going fundrasisers"
+				System.out.println(Thread.currentThread().getName() + ": IP address: " + IP + ", Port number: " + port + ", ACTION: Looking at on going fundrasisers"
 				+ ", Local time: " + date_format.format(LocalDateTime.now()));
 				sendData("Here are on going funderaisers:\n");
-				//toClient.writeBytes("Here are on going funderaisers:\n");
-				//display();
 				for(int i = 0; i < Current_Fundraisers.size(); i++)
 				{
 					temp1 = "";
@@ -343,17 +338,13 @@ public class User<T> implements Runnable {
 						}
 					}
 					sendData((i+1) + "." + temp1 + "\n");
-					
-					//toClient.writeBytes((i+1) + "." + temp1 + "\n");
-					//toClient.flush();
 				}
 				break;
 			//Old Fundraisers
 			case 1:
-				System.out.println(Thread.currentThread().getName() + ": IP address: " + Connection.getInetAddress() + ", Port number: " + Connection.getPort() + ", ACTION: Looking at past fundrasisers"
+				System.out.println(Thread.currentThread().getName() + ": IP address: " + IP + ", Port number: " + port + ", ACTION: Looking at past fundrasisers"
 				+ ", Local time: " + date_format.format(LocalDateTime.now()));
 				sendData("Here are past funderaisers:\n");
-				//toClient.writeBytes("Here are past funderaisers:\n");
 				for(int i = 0; i <	Past_Fundraisers.size(); i++)
 				{
 					temp1 = "";
@@ -377,8 +368,6 @@ public class User<T> implements Runnable {
 						}
 					}
 					sendData((i+1) + "." + temp1 + "\n");
-					//toClient.writeBytes((i+1) + "." + temp1 + "\n");
-					//toClient.flush();
 				}
 				break;
 		}
@@ -395,8 +384,6 @@ public class User<T> implements Runnable {
 		}
 		String result = sentence + "\n";
 		sendData(result);
-		//toClient.writeBytes(result);
-		//toClient.flush();
 	}
 	
 }
