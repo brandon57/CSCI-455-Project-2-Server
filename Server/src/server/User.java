@@ -58,9 +58,11 @@ public class User<T> implements Runnable {
 			{
 				//Keeps the user at either current or past fundrasiers 
 				sendData("\n");
-				display_Fundraisers(current_past);
-				
-				display_options();
+				if(current_past == 0 || current_past == 1)
+				{
+					display_Fundraisers(current_past);
+					display_options();
+				}
 				
 				textFromClient = recieveData().toLowerCase();
 				switch(textFromClient)
@@ -89,7 +91,9 @@ public class User<T> implements Runnable {
 					exit(0);
 					break;
 				default:
+					current_past = 2;
 					sendData("Your input is not valid\n" + "Try again\n");
+					sendData("stop");
 					break;
 				}
 			}
@@ -164,7 +168,7 @@ public class User<T> implements Runnable {
 		Integer choice = 0;
 		Double donation = 0.0;
 		display_Fundraisers(0);
-		sendData("Which fundraiser do you want to donate to?\n" + "Your response should be a number" + " \n");
+		sendData("Which fundraiser do you want to donate to?\n" + "Your response should be a number\n");
 		sendData("stop");
 		while(true)
 		{
@@ -369,6 +373,8 @@ public class User<T> implements Runnable {
 					}
 					sendData((i+1) + "." + temp1 + "\n");
 				}
+				break;
+			default:
 				break;
 		}
 		display_border();
