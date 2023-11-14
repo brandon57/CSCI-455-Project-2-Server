@@ -106,7 +106,7 @@ public class User<T> implements Runnable {
 	//This is an easier way to recieve data from a user
 	private String recieveData() throws Exception
 	{
-		LocalTime timeOut = LocalTime.now().plusMinutes(1);
+		LocalTime timeOut = LocalTime.now().plusMinutes(30);
 		while(!ServerSide.incomingData.containsKey(IP))
 		{
 			if(LocalTime.now().equals(timeOut) || LocalTime.now().isAfter(timeOut))
@@ -175,7 +175,7 @@ public class User<T> implements Runnable {
 			try
 			{
 				choice = Integer.valueOf(recieveData());
-				if(choice > 0)
+				if(choice > 0 && choice <=  Fundraisers.size())
 				{
 					break;
 				}
