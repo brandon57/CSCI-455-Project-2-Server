@@ -13,23 +13,21 @@ import java.time.format.DateTimeFormatter;
 public class User<T> implements Runnable {
 	
 	private DatagramSocket Connection = null;
-	//private DatagramPacket connectionPacket = null;
 	private InetAddress IP = null;
 	private int port = 0;
 	Database<T> Fundraisers;
-	//private DataOutputStream toClient = null;
-	//private BufferedReader fromClient = null;
 	private String textFromClient = "";
 	private int state = 0;
 	private DateTimeFormatter date_format = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");
-	//private byte[] recievedDatabuf = new byte[2048];
 	private byte[] sendDatabuf = new byte[2048];
 	
-	public User(DatagramSocket new_Connection, DatagramPacket new_connectionPacket, String data, Integer newState, Database<T> database)
+	public User(DatagramSocket new_Connection, InetAddress newIP, int newPort, String data, Integer newState, Database<T> database)
 	{
 		Connection = new_Connection;
-		IP = new_connectionPacket.getAddress();
-		port = new_connectionPacket.getPort();
+		IP = newIP;
+		port = newPort;
+		//IP = new_connectionPacket.getAddress();
+		//port = new_connectionPacket.getPort();
 		Fundraisers = database;
 		textFromClient = data;
 		state = newState;
@@ -69,18 +67,18 @@ public class User<T> implements Runnable {
 				{
 				case "current", "1":
 					current_past = 0;
-					//ServerSide.User_state.replace(IP, 1);
+					//ServerSide.Users_connected.replace(IP, 1);
 					break;
 				case "past", "2":
 					current_past = 1;
-					//ServerSide.User_state.put(IP, 2);
+					//ServerSide.Users_connected.put(IP, 2);
 					break;
 				case "create", "3":
-					//ServerSide.User_state.put(IP, 3);
+					//ServerSide.Users_connected.put(IP, 3);
 					create();
 					break;
 				case "donate", "4":
-					//ServerSide.User_state.put(IP, 4);
+					//ServerSide.Users_connected.put(IP, 4);
 					donate();
 					break;
 				case "refresh", "5":
@@ -108,7 +106,7 @@ public class User<T> implements Runnable {
 	//This is an easier way to recieve data from a user
 	private String recieveData() throws Exception
 	{
-		LocalTime timeOut = LocalTime.now().plusMinutes(5);
+		LocalTime timeOut = LocalTime.now().plusMinutes(1);
 		while(!ServerSide.incomingData.containsKey(IP))
 		{
 			if(LocalTime.now().equals(timeOut) || LocalTime.now().isAfter(timeOut))
@@ -144,16 +142,18 @@ public class User<T> implements Runnable {
 		{
 			case 0:
 				disconnectType = ", ACTION: Disconnected";
+				ServerSide.incomingData.remove(IP);
 				break;
 			case 1:
 				disconnectType = ", ACTION: Timeout";
+				ServerSide.Users_timedout.put(IP, ServerSide.incomingData.remove(IP));
 				break;
 		}
+		ServerSide.Users_connected.remove(IP);
 		System.out.println(Thread.currentThread().getName() + ": IP address: " + IP + ", Port number: " + port + disconnectType
 		+ ", Local time: " + date_format.format(LocalDateTime.now()));
-		sendData("^^&^&^&\n");
-		ServerSide.incomingData.remove(IP);
-		ServerSide.User_state.remove(IP);
+		sendData("Timeout\n");
+		
 		while(true)
 		{
 			Thread.currentThread().wait();

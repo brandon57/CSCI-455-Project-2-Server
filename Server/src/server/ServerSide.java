@@ -9,8 +9,12 @@ import java.util.Scanner;
 
 public class ServerSide {
 	
-	public static Map<InetAddress, Integer> User_state = new HashMap<>();
 	private static Map<InetAddress, String> temp = new HashMap<>();
+	private static Map<InetAddress, Integer> temp2 = new HashMap<>();
+	private static Map<InetAddress, String> temp3 = new HashMap<>();
+	
+	public static Map<InetAddress, String> Users_timedout = Collections.synchronizedMap(temp3);
+	public static Map<InetAddress, Integer> Users_connected = Collections.synchronizedMap(temp2);
 	public static Map<InetAddress, String> incomingData = Collections.synchronizedMap(temp);
 	private static DatagramSocket User_Socket = null;
 	private static Scanner input = new Scanner(System.in);
@@ -34,10 +38,14 @@ public class ServerSide {
 			User_Socket.receive(New_Connection);
 			String data = new String(New_Connection.getData(), 0, New_Connection.getLength()).trim();
 			//Checks if the data sent if from a Client that has already connected
-			if(!User_state.containsKey(New_Connection.getAddress()))
+			if(Users_timedout.containsKey(New_Connection.getAddress()))
 			{
-				User_state.put(New_Connection.getAddress(), 0);
-				Thread_Manager.execute(new User(User_Socket, New_Connection, data, User_state.get(New_Connection.getAddress()), Fundraisers));
+				Users_timedout.remove(New_Connection.getAddress());
+			}
+			else if(!Users_connected.containsKey(New_Connection.getAddress()))
+			{
+				Users_connected.put(New_Connection.getAddress(), 0);
+				Thread_Manager.execute(new User(User_Socket, New_Connection.getAddress(), New_Connection.getPort(), data, Users_connected.get(New_Connection.getAddress()), Fundraisers));
 			}
 			else
 			{
@@ -57,7 +65,17 @@ public class ServerSide {
 			port = input.nextLine();
 			if(validPort(port) == true)
 			{
-				break;
+				try
+				{
+					System.out.println("Opening Socket...");
+					User_Socket = new DatagramSocket(Integer.valueOf(port));
+					System.out.println("Socket is open");
+					break;
+				}
+				catch(Exception e)
+				{
+					System.out.println("ERROR\n" + "That port is being used. Try another one.");
+				}
 			}
 			else if(port.equalsIgnoreCase("exit"))
 			{
@@ -65,12 +83,9 @@ public class ServerSide {
 			}
 			else
 			{
-				System.out.println("That port number is not valid");
+				System.out.println("That is not a valid port number");
 			}
 		}
-		System.out.println("Opening Socket...");
-		User_Socket = new DatagramSocket(Integer.valueOf(port));
-		System.out.println("Socket is open");
 	}
 	
 	//Checks if the port number the user inputted is valid
