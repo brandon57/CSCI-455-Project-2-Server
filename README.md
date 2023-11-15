@@ -1,7 +1,7 @@
 # CSCI-455-Project-2-Server
 The server application of project 2 for CSCI 455
 
-If you are looking for the client application the github repository for it is here [Client application](https://github.com/brandon57/CSCI-455-Project-1-Client)
+If you are looking for the client application the github repository for it is here [Client application](https://github.com/brandon57/CSCI-455-Project-2-Client)
 
 Note: In order to run this you need Java JDK version 17 or newer
 
