@@ -12,7 +12,7 @@ Note: In order to run this you need Java JDK version 17 or newer
 
 # How to start the server
 In order to run the server you need to open the command line or powershell and navigate to the directory of where the file is located.
-Once you do that you can start the program by typing this command `java -jar Server.jar`
+Once you do that you can start the program by typing this command `java -jar ServerUDP.jar`
 
 Once you do that you you should be greeted with with a screen asking you to set the port number for your server.
 ```text
