@@ -1,9 +1,5 @@
 package server;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.net.*;
 import java.util.ArrayList;
@@ -26,8 +22,6 @@ public class User<T> implements Runnable {
 		Connection = new_Connection;
 		IP = newIP;
 		port = newPort;
-		//IP = new_connectionPacket.getAddress();
-		//port = new_connectionPacket.getPort();
 		Fundraisers = database;
 		textFromClient = data;
 		state = newState;
@@ -43,15 +37,9 @@ public class User<T> implements Runnable {
 			+ ", Local time: " + date_format.format(LocalDateTime.now()));
 			sendData("You are connected!\n");
 			current_past = 0;
-			//textFromClient = null;
-//			if(state == 0)
-//			{
-//				
-//			}
 			
 			//The beginning of the UI
 			//This is how the User interacts with the Server
-			
 			while(true)
 			{
 				//Keeps the user at either current or past fundrasiers 
@@ -67,18 +55,14 @@ public class User<T> implements Runnable {
 				{
 				case "current", "1":
 					current_past = 0;
-					//ServerSide.Users_connected.replace(IP, 1);
 					break;
 				case "past", "2":
 					current_past = 1;
-					//ServerSide.Users_connected.put(IP, 2);
 					break;
 				case "create", "3":
-					//ServerSide.Users_connected.put(IP, 3);
 					create();
 					break;
 				case "donate", "4":
-					//ServerSide.Users_connected.put(IP, 4);
 					donate();
 					break;
 				case "refresh", "5":
@@ -106,6 +90,9 @@ public class User<T> implements Runnable {
 	//This is an easier way to recieve data from a user
 	private String recieveData() throws Exception
 	{
+		//The server wait 30 mins for a response from a user
+		//If the user doesn't response within that time the user is then removed from the Users_connected hashmap
+		//Then placed in the Users_timedout hashmap
 		LocalTime timeOut = LocalTime.now().plusMinutes(30);
 		while(!ServerSide.incomingData.containsKey(IP))
 		{
@@ -138,6 +125,7 @@ public class User<T> implements Runnable {
 	private void exit(int type) throws Exception
 	{
 		String disconnectType = null;
+		//Output is changed based on how the user disconnected
 		switch(type)
 		{
 			case 0:
@@ -153,7 +141,6 @@ public class User<T> implements Runnable {
 		System.out.println(Thread.currentThread().getName() + ": IP address: " + IP + ", Port number: " + port + disconnectType
 		+ ", Local time: " + date_format.format(LocalDateTime.now()));
 		sendData("Timeout\n");
-		
 		while(true)
 		{
 			Thread.currentThread().wait();

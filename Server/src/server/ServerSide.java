@@ -37,7 +37,7 @@ public class ServerSide {
 			DatagramPacket New_Connection = new DatagramPacket(recievedData, recievedData.length);
 			User_Socket.receive(New_Connection);
 			String data = new String(New_Connection.getData(), 0, New_Connection.getLength()).trim();
-			//Checks if the data sent if from a Client that has already connected
+			//Checks if the data sent is from a Client that has already connected
 			if(Users_timedout.containsKey(New_Connection.getAddress()))
 			{
 				Users_timedout.remove(New_Connection.getAddress());
